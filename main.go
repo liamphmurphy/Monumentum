@@ -85,28 +85,38 @@ func SendMail() {
 
 	from := mail.Address{"", config.Email}
 	for k, v := range currentReminders {
-		to := mail.Address{"", k}
+		to := mail.Address{"", v.UserEmail}
+		fmt.Println(v.ShowName)
+		fmt.Println(v.ShowDate)
+		fmt.Println(v.ShowType)
+		fmt.Println(v.UserEmail)
+		fmt.Println(k)
 
 		err = client.Mail(from.Address)
 		if err != nil {
-			panic(err.Error())
+			fmt.Printf("From address error: %s", err)
 		}
 
 		err = client.Rcpt(to.Address)
 		if err != nil {
-			panic(err.Error())
+			fmt.Printf("Rcpt error: %s\n", err)
 		}
 
 		writer, err := client.Data()
+		if err != nil {
+			fmt.Printf("Writer error: %s\n", err)
+		}
 
 		body := "Hey that show " + v.ShowName + " is about to start!"
-		message := MakeMessage(config.Email, k, subject, body)
+		message := MakeMessage(config.Email, v.UserEmail, subject, body)
 		_, err = writer.Write([]byte(message))
 		if err != nil {
 			fmt.Printf("Error sending mail: %s", err)
 		}
-		client.Quit()
+		writer.Close()
+
 	}
+	client.Quit()
 
 }
 
@@ -146,7 +156,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	SendMail()
+	go SendMail()
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/submission", submission)
 	http.ListenAndServe(":8000", nil)

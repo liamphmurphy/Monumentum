@@ -10,16 +10,18 @@ import (
 )
 
 type UserInfo struct {
-	ShowName string
-	ShowDate string
-	ShowType string
+	ShowName  string
+	ShowDate  string
+	ShowType  string
+	UserEmail string
 }
 
-func MakeUserInfo(name string, showtype string, date string) *UserInfo {
+func MakeUserInfo(name string, showtype string, date string, email string) *UserInfo {
 	return &UserInfo{
-		ShowName: name,
-		ShowDate: date,
-		ShowType: showtype,
+		ShowName:  name,
+		ShowDate:  date,
+		ShowType:  showtype,
+		UserEmail: email,
 	}
 }
 
@@ -52,19 +54,20 @@ func AddToDatabase(form url.Values) {
 	insert.Exec(showName, showType, showDate, userEmail)
 }
 
-func QueryDB() map[string]*UserInfo {
+func QueryDB() map[int]*UserInfo {
 	db := InitializeDB()
 
-	query, err := db.Query("SELECT ShowName, ShowType, ReleaseDate, Email FROM Reminders")
+	query, err := db.Query("SELECT ShowID, ShowName, ShowType, ReleaseDate, Email FROM Reminders")
 	if err != nil {
 		fmt.Printf("Error: %s", err)
 	}
 
-	userInfo := make(map[string]*UserInfo)
+	userInfo := make(map[int]*UserInfo)
 	for query.Next() {
 		var ShowName, ShowType, ReleaseDate, Email string
-		query.Scan(&ShowName, &ShowType, &ReleaseDate, &Email)
-		userInfo[Email] = MakeUserInfo(ShowName, ShowType, ReleaseDate)
+		var ShowID int
+		query.Scan(&ShowID, &ShowName, &ShowType, &ReleaseDate, &Email)
+		userInfo[ShowID] = MakeUserInfo(ShowName, ShowType, ReleaseDate, Email)
 
 	}
 	return userInfo
