@@ -23,6 +23,7 @@ type Config struct {
 	Password string
 }
 
+// This decodes the variables from config.toml for use in the program.
 func LoadConfig() *Config {
 	var config Config
 	_, err := toml.DecodeFile("config.toml", &config)
@@ -42,6 +43,7 @@ func TLSDial(address string) (*tls.Conn, error) {
 	return tls.Dial("tcp", address, nil)
 }
 
+// Constructs the email send to users, usually called by SendMail.
 func MakeMessage(sender string, recipient string, subject string, body string) (message string) {
 	content := make(map[string]string)
 	content["From"] = sender
@@ -56,7 +58,9 @@ func MakeMessage(sender string, recipient string, subject string, body string) (
 	return message
 }
 
+// Using returned values of DB and Config, form and send email.
 func SendMail() {
+	// Get values from DB and config.
 	currentReminders := QueryDB()
 	config := LoadConfig()
 
@@ -71,6 +75,7 @@ func SendMail() {
 		fmt.Printf("Client error: %s", err)
 	}
 
+	// Set up auth necessary to send email. Uses values from config.
 	auth := smtp.PlainAuth("", config.Email, config.Password, serverHost)
 	authErr := client.Auth(auth)
 	if authErr != nil {
@@ -84,13 +89,9 @@ func SendMail() {
 	subject := "A new show is about to start!"
 
 	from := mail.Address{"", config.Email}
-	for k, v := range currentReminders {
+	// In this for range, because k is just the auto-increment PK ID, it is not needed here.
+	for _, v := range currentReminders {
 		to := mail.Address{"", v.UserEmail}
-		fmt.Println(v.ShowName)
-		fmt.Println(v.ShowDate)
-		fmt.Println(v.ShowType)
-		fmt.Println(v.UserEmail)
-		fmt.Println(k)
 
 		err = client.Mail(from.Address)
 		if err != nil {
@@ -108,18 +109,23 @@ func SendMail() {
 		}
 
 		body := "Hey that show " + v.ShowName + " is about to start!"
+		// Build the email to send to user.
 		message := MakeMessage(config.Email, v.UserEmail, subject, body)
 		_, err = writer.Write([]byte(message))
 		if err != nil {
 			fmt.Printf("Error sending mail: %s", err)
 		}
+		fmt.Println("Successful email sent to: " + v.UserEmail)
+		// Close writer in current loop so the next loop doesn't error out.
 		writer.Close()
 
 	}
+	// Once loop is done, close smtp client.
 	client.Quit()
 
 }
 
+// This http handler function displays when user hits submit button.
 func submission(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Method:", r.Method+"\n")
 
@@ -135,6 +141,7 @@ func submission(w http.ResponseWriter, r *http.Request) {
 	AddToDatabase(r.Form)
 }
 
+// Default index handler, has all input forms.
 func handler(w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now()
@@ -156,7 +163,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	// Run in new thread so SendMail doesn't halt web app submissions
 	go SendMail()
+	// Standard http stuff for handlers and port.
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/submission", submission)
 	http.ListenAndServe(":8000", nil)

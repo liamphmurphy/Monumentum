@@ -16,6 +16,7 @@ type UserInfo struct {
 	UserEmail string
 }
 
+// Because the map from DB requires more than one value per key, this function returns multiple values per key
 func MakeUserInfo(name string, showtype string, date string, email string) *UserInfo {
 	return &UserInfo{
 		ShowName:  name,
@@ -25,6 +26,7 @@ func MakeUserInfo(name string, showtype string, date string, email string) *User
 	}
 }
 
+// This function only opens the db file using the sqlite3 driver, doesn't do anything else.
 func InitializeDB() *sql.DB {
 	db, err := sql.Open("sqlite3", "search.db")
 	if err != nil {
@@ -33,6 +35,7 @@ func InitializeDB() *sql.DB {
 	return db
 }
 
+// When user hits submit, their values are added into the sqlite3 db.
 func AddToDatabase(form url.Values) {
 	db := InitializeDB()
 	// Becase r.Form values is an array of strings, convert it to normal string for database purposes.
@@ -54,6 +57,7 @@ func AddToDatabase(form url.Values) {
 	insert.Exec(showName, showType, showDate, userEmail)
 }
 
+// Gets all current records in database and puts it into map.
 func QueryDB() map[int]*UserInfo {
 	db := InitializeDB()
 
