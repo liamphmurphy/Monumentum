@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Show Reminder App</title>
+</head>
+<body>
+    <h2>Show Reminder App</h2>
+        <form action="/submission" method="post">
+            Show Name: <input type ="text" name="sname"><br><br>
+            Show Type: <select name="showtype" required> 
+                <option value="movie">Movie</option>
+                <option value="tvshow">TV Show</option>
+                <option value="miniseries">Mini Series</option>
+                <option value="documentary">Documentary</option>
+                <option value="theater">Theater</option>
+                <option value="other">Other</option>
+            </select><br><br>
+            Show release date: <input type="date" name="sdate" required><br><br>
+            Your email: <input type="email" name ="uemail" required><br><br>
+        <input type="submit" value="Submit New Reminder">
+        </form>
+    <p>The current time is: {{ .AppTime }}</p>
+</body>
+
+</html>
