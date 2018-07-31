@@ -33,7 +33,7 @@ func MakeUserInfo(name string, showtype string, date string, time string, interv
 
 // This function only opens the db file using the sqlite3 driver, doesn't do anything else.
 func InitializeDB() *sql.DB {
-	db, err := sql.Open("sqlite3", "search.db")
+	db, err := sql.Open("sqlite3", "../search.db")
 	if err != nil {
 		panic(err.Error())
 	}
