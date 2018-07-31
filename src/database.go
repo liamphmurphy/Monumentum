@@ -33,7 +33,7 @@ func MakeUserInfo(name string, showtype string, date string, time string, interv
 
 // This function only opens the db file using the sqlite3 driver, doesn't do anything else.
 func InitializeDB() *sql.DB {
-	db, err := sql.Open("sqlite3", "../search.db")
+	db, err := sql.Open("sqlite3", "./../search.db")
 	if err != nil {
 		panic(err.Error())
 	}
@@ -49,8 +49,9 @@ func AddToDatabase(form url.Values) {
 	showTime := strings.Join(form["stime"], " ")
 	userEmail := strings.Join(form["uemail"], " ")
 	showType := strings.Join(form["showtype"], " ")
+
+	// Convert the forms []string value for reminder interval and convert it to uint.
 	reminderInterval, err := strconv.ParseUint(form.Get("rint")[0:], 10, 64)
-	fmt.Printf("AddToDb: %v", reminderInterval)
 
 	// Useful information to print in console for server.
 	fmt.Println("SHOW NAME: " + showName)

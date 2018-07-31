@@ -143,7 +143,7 @@ func SendMail() {
 // This http handler function displays when user hits submit button.
 func submission(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Method:", r.Method+"\n")
-
+	fmt.Println("REACHED SUBMISSION")
 	if r.Method == "GET" {
 		t, _ := template.ParseFiles("index.html")
 		t.Execute(w, nil)
@@ -157,7 +157,7 @@ func submission(w http.ResponseWriter, r *http.Request) {
 }
 
 // Default index handler, has all input forms.
-func handler(w http.ResponseWriter, r *http.Request) {
+func index(w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now()
 
@@ -165,7 +165,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		AppTime: now.Format("3:04 PM"),
 	}
 
-	t, err := template.ParseFiles("index.html")
+	t, err := template.ParseFiles("./index.html")
 	if err != nil {
 		fmt.Printf("Error: %s", err)
 	}
@@ -181,8 +181,10 @@ func main() {
 	// Run in new thread so SendMail doesn't halt web app submissions
 	go SendMail()
 	// Standard http stuff for handlers and port.
-	http.HandleFunc("/", handler)
+	http.HandleFunc("/", index)
 	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("css"))))
-	http.HandleFunc("submission.html", submission)
+	http.HandleFunc("/submission", submission)
+	// Golang has to serve css folder manually for html to read it.
+
 	http.ListenAndServe(":8000", nil)
 }
