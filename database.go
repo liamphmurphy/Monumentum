@@ -4,25 +4,30 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type UserInfo struct {
-	ShowName  string
-	ShowDate  string
-	ShowType  string
-	UserEmail string
+	ShowName         string
+	ShowDate         string
+	ShowTime         string
+	ShowType         string
+	ReminderInterval uint16
+	UserEmail        string
 }
 
 // Because the map from DB requires more than one value per key, this function returns multiple values per key
-func MakeUserInfo(name string, showtype string, date string, email string) *UserInfo {
+func MakeUserInfo(name string, showtype string, date string, time string, interval uint16, email string) *UserInfo {
 	return &UserInfo{
-		ShowName:  name,
-		ShowDate:  date,
-		ShowType:  showtype,
-		UserEmail: email,
+		ShowName:         name,
+		ShowDate:         date,
+		ShowTime:         time,
+		ShowType:         showtype,
+		ReminderInterval: interval,
+		UserEmail:        email,
 	}
 }
 
@@ -41,27 +46,31 @@ func AddToDatabase(form url.Values) {
 	// Becase r.Form values is an array of strings, convert it to normal string for database purposes.
 	showName := strings.Join(form["sname"], " ")
 	showDate := strings.Join(form["sdate"], " ")
+	showTime := strings.Join(form["stime"], " ")
 	userEmail := strings.Join(form["uemail"], " ")
 	showType := strings.Join(form["showtype"], " ")
+	reminderInterval, err := strconv.ParseUint(form.Get("rint")[0:], 10, 64)
+	fmt.Printf("AddToDb: %v", reminderInterval)
 
 	// Useful information to print in console for server.
 	fmt.Println("SHOW NAME: " + showName)
 	fmt.Println("SHOW DATE: " + showDate)
+	fmt.Println("SHOW TIME: " + showTime)
 	fmt.Println("USER EMAIL: " + userEmail)
 
 	// Setup SQL query and then execute using user input values.
-	insert, err := db.Prepare("INSERT INTO Reminders (ShowName, ShowType, ReleaseDate, Email) VALUES (?,?,?,?)")
+	insert, err := db.Prepare("INSERT INTO Reminders (ShowName, ShowType, ReleaseDate, ShowTime, ReminderInterval, Email) VALUES (?,?,?,?,?,?)")
 	if err != nil {
 		panic(err.Error())
 	}
-	insert.Exec(showName, showType, showDate, userEmail)
+	insert.Exec(showName, showType, showDate, showTime, reminderInterval, userEmail)
 }
 
 // Gets all current records in database and puts it into map.
 func QueryDB() map[int]*UserInfo {
 	db := InitializeDB()
 
-	query, err := db.Query("SELECT ShowID, ShowName, ShowType, ReleaseDate, Email FROM Reminders")
+	query, err := db.Query("SELECT ShowID, ShowName, ShowType, ReleaseDate, ShowTime, ReminderInterval, Email FROM Reminders")
 	if err != nil {
 		fmt.Printf("Error: %s", err)
 	}
@@ -70,8 +79,10 @@ func QueryDB() map[int]*UserInfo {
 	for query.Next() {
 		var ShowName, ShowType, ReleaseDate, Email string
 		var ShowID int
-		query.Scan(&ShowID, &ShowName, &ShowType, &ReleaseDate, &Email)
-		userInfo[ShowID] = MakeUserInfo(ShowName, ShowType, ReleaseDate, Email)
+		var ReminderInterval uint16
+		var ShowTime string
+		query.Scan(&ShowID, &ShowName, &ShowType, &ReleaseDate, &ShowTime, &ReminderInterval, &Email)
+		userInfo[ShowID] = MakeUserInfo(ShowName, ShowType, ReleaseDate, ShowTime, ReminderInterval, Email)
 
 	}
 	return userInfo
