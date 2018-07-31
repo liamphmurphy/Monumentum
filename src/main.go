@@ -182,6 +182,7 @@ func main() {
 	go SendMail()
 	// Standard http stuff for handlers and port.
 	http.HandleFunc("/", handler)
-	http.HandleFunc("/submission", submission)
+	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("css"))))
+	http.HandleFunc("submission.html", submission)
 	http.ListenAndServe(":8000", nil)
 }
