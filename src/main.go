@@ -19,9 +19,10 @@ type Homepage struct {
 }
 
 type Config struct {
-	Server   string
-	Email    string
-	Password string
+	Server         string
+	Email          string
+	Password       string
+	UpdateInterval time.Duration
 }
 
 // This decodes the variables from config.toml for use in the program.
@@ -33,9 +34,10 @@ func LoadConfig() *Config {
 	}
 
 	return &Config{
-		Server:   config.Server,
-		Email:    config.Email,
-		Password: config.Password,
+		Server:         config.Server,
+		Email:          config.Email,
+		Password:       config.Password,
+		UpdateInterval: config.UpdateInterval,
 	}
 }
 
@@ -62,8 +64,7 @@ func MakeMessage(sender string, recipient string, subject string, body string) (
 // Using returned values of DB and Config, form and send email.
 func SendMail() {
 	// Get values from DB and config.
-
-	currentReminders := QueryDB()
+	db := InitializeDB()
 	config := LoadConfig()
 
 	serverHost, _, _ := net.SplitHostPort(config.Server)
@@ -92,8 +93,8 @@ func SendMail() {
 
 	from := mail.Address{"", config.Email}
 	// In this for range, because k is just the auto-increment PK ID, it is not needed here.
-	for range time.NewTicker(20 * time.Second).C {
-		db := InitializeDB()
+	for range time.NewTicker(config.UpdateInterval * time.Second).C {
+		currentReminders := QueryDB()
 		for k, v := range currentReminders {
 
 			date := time.Now()

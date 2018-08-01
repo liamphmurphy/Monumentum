@@ -1,3 +1,5 @@
 Server = ""
 Email = ""
 Password = ""
+
+UpdateInterval = 60 # How often app checks for new reminders to be sent in seconds.
