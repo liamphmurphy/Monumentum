@@ -153,15 +153,15 @@ func SendMail() {
 // This http handler function displays when user hits submit button.
 func submission(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Method:", r.Method+"\n")
-	fmt.Println("REACHED SUBMISSION")
 	if r.Method == "GET" {
 		t, _ := template.ParseFiles("index.html")
 		t.Execute(w, nil)
 	} else {
 		r.ParseForm()
 
-		fmt.Fprintf(w, "New reminder for %s", r.Form["sname"])
-		fmt.Fprintf(w, " has been created.")
+		t, _ := template.ParseFiles("submission.html")
+		t.Execute(w, nil)
+
 	}
 	AddToDatabase(r.Form)
 }
