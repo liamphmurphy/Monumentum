@@ -62,6 +62,7 @@ func MakeMessage(sender string, recipient string, subject string, body string) (
 // Using returned values of DB and Config, form and send email.
 func SendMail() {
 	// Get values from DB and config.
+
 	currentReminders := QueryDB()
 	config := LoadConfig()
 
@@ -91,46 +92,54 @@ func SendMail() {
 
 	from := mail.Address{"", config.Email}
 	// In this for range, because k is just the auto-increment PK ID, it is not needed here.
-	for _, v := range currentReminders {
+	for range time.NewTicker(20 * time.Second).C {
+		db := InitializeDB()
+		for k, v := range currentReminders {
 
-		date := time.Now()
-		format := "2006-01-02"
+			date := time.Now()
+			format := "2006-01-02"
 
-		systemDate, _ := time.Parse(format, v.ShowDate)
+			systemDate, _ := time.Parse(format, v.ShowDate)
 
-		diff := date.Sub(systemDate)
+			diff := date.Sub(systemDate)
 
-		if math.Abs(diff.Hours()/24) <= float64(v.ReminderInterval) {
-			fmt.Println("Less then 7 days.")
+			if math.Abs(diff.Hours()/24) <= float64(v.ReminderInterval) {
 
-			to := mail.Address{"", v.UserEmail}
+				fmt.Println("Reminder for " + v.ShowName + " sent to " + v.UserEmail)
 
-			err = client.Mail(from.Address)
-			if err != nil {
-				fmt.Printf("From address error: %s", err)
+				to := mail.Address{"", v.UserEmail}
+
+				err = client.Mail(from.Address)
+				if err != nil {
+					fmt.Printf("From address error: %s", err)
+				}
+
+				err = client.Rcpt(to.Address)
+				if err != nil {
+					fmt.Printf("Rcpt error: %s\n", err)
+				}
+
+				writer, err := client.Data()
+				if err != nil {
+					fmt.Printf("Writer error: %s\n", err)
+				}
+
+				body := "Hey that show " + v.ShowName + " is about to start!"
+				// Build the email to send to user.
+				message := MakeMessage(config.Email, v.UserEmail, subject, body)
+				_, err = writer.Write([]byte(message))
+				if err != nil {
+					fmt.Printf("Error sending mail: %s", err)
+
+					fmt.Println("Successful email sent to: " + v.UserEmail)
+
+				}
+
+				// After reminder is sent out, delete record so it does not repeat later.
+				db.Exec("DELETE FROM Reminders where ShowID = ?", k)
+				writer.Close()
 			}
 
-			err = client.Rcpt(to.Address)
-			if err != nil {
-				fmt.Printf("Rcpt error: %s\n", err)
-			}
-
-			writer, err := client.Data()
-			if err != nil {
-				fmt.Printf("Writer error: %s\n", err)
-			}
-
-			body := "Hey that show " + v.ShowName + " is about to start!"
-			// Build the email to send to user.
-			message := MakeMessage(config.Email, v.UserEmail, subject, body)
-			_, err = writer.Write([]byte(message))
-			if err != nil {
-				fmt.Printf("Error sending mail: %s", err)
-
-				fmt.Println("Successful email sent to: " + v.UserEmail)
-
-			}
-			writer.Close()
 		}
 		// Close writer in current loop so the next loop doesn't error out.
 
